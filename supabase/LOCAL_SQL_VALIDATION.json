@@ -1,0 +1,62 @@
+{
+  "engine": "PostgreSQL 18.6 (PGlite 0.5.9) on wasm32-unknown-emscripten, compiled by emcc (Emscripten gcc/clang-like replacement + linker emulating GNU ld) 3.1.74 (1092ec30a3fb1d46b1782ff1b4db5094d3d06ae5), 32-bit",
+  "enginePackage": "0.5.9",
+  "migrations": [
+    {
+      "filename": "20261014000000_auth_employees.sql",
+      "sha256": "0ad2cff1a128f23a7485f1e97c51871d0d46124468c14fabf4da36bfa320261c"
+    },
+    {
+      "filename": "20261014010000_employee_portal.sql",
+      "sha256": "f3b1f4ce8f85ebb3c6ed46f910b34ea30b95ab720ac3f6fac2599019553a06d7"
+    },
+    {
+      "filename": "20261014020000_manager_portal.sql",
+      "sha256": "9155b89266895372292ebb8764c0d2109e5d0053f4292136b650bdd1edacd370"
+    },
+    {
+      "filename": "20261014030000_activation_safety.sql",
+      "sha256": "e98af481f6eafd215e19d1705ce641acce8fa962a57b9f6c3590971cff920c51"
+    },
+    {
+      "filename": "20261014040000_portal_hardening.sql",
+      "sha256": "705918594e2d1c107901a6798a163b35b06a565e12d6ea15b88cfb9b7030dbe9"
+    }
+  ],
+  "checks": [
+    "all public tables have RLS",
+    "one announcement RPC with eight arguments",
+    "security-definer functions fix their search path",
+    "migration executor is not superuser and Storage ownership is preserved",
+    "activation internals and working-day helper deny app roles",
+    "private buckets and no direct portal writes",
+    "portal catalog has real foreign keys, exclusion and integrity triggers",
+    "invited, disabled, incomplete, inactive and unlinked sessions cannot read or write portal data",
+    "employee profile and manager roster obey role and department boundaries",
+    "attendance duration and own/department visibility execute correctly",
+    "task assignment, progress, manager review and timestamps execute successfully",
+    "leave submission is idempotent, caller-bound and overlap protected",
+    "only designated manager can see and decide leave; repeated decisions fail",
+    "required leave documents require actual owned objects and designated approver access",
+    "announcement drafts, publication and attachments follow department RLS",
+    "announcement replacement uses expected-path CAS and owner-only replacement",
+    "account disabling immediately revokes access despite outstanding work",
+    "relationship changes require rerouting and transferred uploaders lose old referenced documents",
+    "provisioning missing settings fails closed",
+    "synthetic provisioning creates valid department and approver links",
+    "provisioning exact rerun preserves profiles and conflicting identity rolls back",
+    "activation claim is service-only and unknown eligibility returns nothing",
+    "competing activation is cooled down and wrong lease cannot reconcile or link",
+    "valid activation prelinks as invited without exposing protected tables or lease fields",
+    "setup requires confirmed email and password; username collision rolls back activation",
+    "release cannot demote an activated profile and provisioning preserves setup state",
+    "disable during activation invalidates linking without resurrecting profile",
+    "invalid legacy data rolls back the fifth migration without partial hardening"
+  ],
+  "limitations": [
+    "Minimal Auth/Storage compatibility schemas, not a Supabase stack",
+    "No Auth API, SMTP, PostgREST, signed URLs or physical object storage tested",
+    "Single database connection; no simultaneous transaction/concurrency proof",
+    "Real Supabase migration-role permissions and managed-schema upgrades unverified"
+  ]
+}

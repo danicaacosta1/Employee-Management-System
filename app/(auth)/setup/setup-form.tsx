@@ -13,8 +13,8 @@ export function SetupForm() {
 
   return (
     <AuthCard
-      title="First Time Setup"
-      subtitle="Set up your permanent account credentials"
+      title="Update Credentials"
+      subtitle="Replace your temporary username and password with your own"
       icon={<ShieldCheckIcon className="size-5" />}
     >
       {state.error && <AuthAlert message={state.error} />}

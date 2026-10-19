@@ -9,7 +9,7 @@ import { PasswordField, SubmitButton, TextField } from "@/components/auth/fields
 import { KeyIcon, MailIcon } from "@/components/ui/icons";
 
 const NOTICES: Record<string, string> = {
-  "already-active": "Your account is already active. Log in with your company email.",
+  "already-active": "Your account is already active. Log in with your username or company email.",
   "password-updated": "Your password has been updated. Log in with your new password.",
 };
 
@@ -27,14 +27,13 @@ export function LoginForm({ next, notice }: { next?: string; notice?: string }) 
       <form action={action} noValidate>
         {next && <input type="hidden" name="next" value={next} />}
         <TextField
-          label="Company Email"
-          name="email"
-          type="email"
+          label="Username or Email"
+          name="login"
           icon={MailIcon}
-          placeholder="Email"
-          autoComplete="email"
-          defaultValue={state.values?.email}
-          error={state.fieldErrors?.email}
+          placeholder="Username or company email"
+          autoComplete="username"
+          defaultValue={state.values?.login}
+          error={state.fieldErrors?.login}
         />
         <PasswordField
           label="Password"

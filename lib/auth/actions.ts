@@ -8,7 +8,7 @@ import { SESSION_SCOPE_COOKIE } from "@/lib/supabase/cookies";
 import { getSessionUser } from "./dal";
 import { roleHome, rolePrefix, safeNext } from "./roles";
 import { appOrigin } from "./callback";
-import { sendActivation } from "./activation";
+import { emailForUsername, sendActivation } from "./activation";
 import { isAuthorizedAccount } from "./accounts";
 import {
   normalizeEmail,
@@ -27,7 +27,7 @@ export type FormState = {
 };
 
 const LOGIN_FAILED =
-  "We couldn't sign you in. Please review your email and password, then try again.";
+  "We couldn't sign you in. Please review your username or email and password, then try again.";
 const SETUP_FAILED =
   "We couldn't complete your account setup. Please review your username and password, then try again.";
 const UNAVAILABLE = "Service is temporarily unavailable. Please try again shortly.";
@@ -59,24 +59,36 @@ export async function activateAccount(_prev: FormState, formData: FormData): Pro
   }
 
   return {
-    success: "If your account is eligible, an activation link will be sent to your company email.",
+    success:
+      "If your account is eligible, a temporary username and password will be sent to your company email.",
     values,
   };
 }
 
 export async function signIn(_prev: FormState, formData: FormData): Promise<FormState> {
-  const email = normalizeEmail(formData.get("email"));
+  const login = normalizeEmail(formData.get("login"));
   const password = String(formData.get("password") ?? "");
   const remember = formData.get("remember") === "on";
   const next = safeNext(formData.get("next"));
-  const values = { email, remember: remember ? "on" : "" };
+  const values = { login, remember: remember ? "on" : "" };
 
+  const byEmail = login.includes("@");
   const fieldErrors = compact({
-    email: validateEmail(email),
+    login: !login ? "Username or email is required." : byEmail ? validateEmail(login) : null,
     password: password ? null : "Password is required.",
   });
   if (fieldErrors) return { fieldErrors, values };
 
+  let email = login;
+  if (!byEmail) {
+    if (validateUsername(login)) return { error: LOGIN_FAILED, values };
+    try {
+      email = (await emailForUsername(createAdminClient(), login)) ?? "";
+    } catch {
+      console.error("Username lookup failed");
+      return { error: UNAVAILABLE, values };
+    }
+  }
   if (!isAuthorizedAccount(email)) return { error: LOGIN_FAILED, values };
 
   const cookieStore = await cookies();
@@ -128,7 +140,21 @@ export async function completeSetup(_prev: FormState, formData: FormData): Promi
   if (user.setupComplete) redirect(roleHome(user.role));
 
   const supabase = await createClient();
-  const { error: passwordError } = await supabase.auth.updateUser({ password });
+  // New credentials must replace the temporary ones from the activation email.
+  const { data: { user: authUser } } = await supabase.auth.getUser();
+  const temp = authUser?.user_metadata ?? {};
+  const reused = compact({
+    username: temp.temp_username && username === temp.temp_username
+      ? "Choose a new username, not the temporary one." : null,
+    password: temp.temp_password && password === temp.temp_password
+      ? "Choose a new password, not the temporary one." : null,
+  });
+  if (reused) return { error: SETUP_FAILED, fieldErrors: reused, values };
+
+  // Clearing the temporary metadata also removes it from future recovery emails.
+  const { error: passwordError } = await supabase.auth.updateUser({
+    password, data: { temp_username: null, temp_password: null },
+  });
   // A previous attempt may have saved the password before the username RPC failed.
   // Reusing that password must allow an incomplete account to retry onboarding.
   if (passwordError && passwordError.code !== "same_password") {
